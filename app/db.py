@@ -1,8 +1,8 @@
 """
 db.py — Database connection factory.
 
-Returns a DB-API 2.0 connection for either MySQL (PyMySQL) or PostgreSQL (psycopg2).
-Both drivers share the same %s placeholder style so the writer stays driver-agnostic.
+Returns a DB-API 2.0 connection for PostgreSQL (psycopg2) or MySQL (PyMySQL).
+Both drivers use %s placeholders, so detector.py stays driver-agnostic.
 """
 import logging
 from typing import Any
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_connection(cfg) -> Any:
-    """Return a live DB-API connection based on cfg.db_type."""
+    """Open and return a live DB-API connection based on cfg.db_type."""
     if cfg.db_type == "mysql":
         import pymysql
         conn = pymysql.connect(
@@ -39,5 +39,4 @@ def get_connection(cfg) -> Any:
         logger.info("Connected to PostgreSQL at %s:%s/%s", cfg.db_host, cfg.db_port, cfg.db_name)
         return conn
 
-    else:
-        raise ValueError(f"Unsupported DB_TYPE: {cfg.db_type!r}. Use 'mysql' or 'postgresql'.")
+    raise ValueError(f"Unsupported DB_TYPE: {cfg.db_type!r}. Use 'postgresql' or 'mysql'.")

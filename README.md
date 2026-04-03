@@ -19,6 +19,7 @@ Polls the PS3838 / Pinnacle v3 API for Football and Basketball line changes and 
 | `DB_PASSWORD` | ✅ | — | Database password |
 | `POLL_INTERVAL` | | `5` | Seconds between polls per sport |
 | `SPORTS` | | `football,basketball` | Comma-separated sports to track |
+| `LOG_LEVEL` | | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 
 ---
 
@@ -28,7 +29,7 @@ Polls the PS3838 / Pinnacle v3 API for Football and Basketball line changes and 
 
 ```bash
 cp .env.example .env          # fill in credentials
-docker compose up -d --build  # starts DB + tracker
+docker compose up -d --build
 docker compose logs -f tracker
 ```
 
@@ -48,17 +49,15 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 
-# Apply schema (PostgreSQL example):
+# Apply schema (PostgreSQL):
 psql -U $DB_USER -d $DB_NAME -f sql/schema.sql
 
 cp .env.example .env   # fill in credentials
-set -a && source .env && set +a   # load env vars (Linux/macOS)
-# Windows: set each variable manually or use a tool like direnv
 
-python src/poller.py
+python -m app.main
 ```
 
-Stop with `Ctrl+C` — the service handles `SIGINT`/`SIGTERM` gracefully.
+Stop with `Ctrl+C` — handles `SIGINT`/`SIGTERM` gracefully.
 
 ---
 
@@ -74,18 +73,19 @@ pytest tests/ -v
 ## Project Structure
 
 ```
-├── src/
-│   ├── poller.py          # main polling loop (entry point)
-│   ├── pinnacle_client.py # HTTP client with back-off
-│   ├── parser.py          # API response → flat dicts
-│   ├── writer.py          # bulk DB inserts
-│   ├── db.py              # connection factory
-│   └── config.py          # env-var config loader
+odds-tracker/
+│
+├── app/
+│   ├── main.py          # entry point — polling loop, threading, shutdown
+│   ├── api_client.py    # HTTP client (back-off, cursor) + response parser
+│   ├── detector.py      # bulk DB inserts with deduplication
+│   ├── db.py            # PostgreSQL / MySQL connection factory
+│   ├── config.py        # env-var config loader
+│   └── logger.py        # logging setup
+│
 ├── sql/
-│   └── schema.sql         # table + index definitions
-├── tests/
-│   ├── test_parser.py
-│   └── test_writer.py
+│   └── schema.sql       # table + index definitions (PG + MySQL)
+│
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
@@ -96,8 +96,8 @@ pytest tests/ -v
 
 ## How It Works
 
-1. One thread is spawned per sport (football, basketball).
+1. One thread per sport (football, basketball) is spawned at startup.
 2. Each thread calls `/fixtures` every 60 cycles to refresh team/league names.
-3. Each thread calls `/odds` with the `last` cursor — the API returns **only changed lines**, keeping bandwidth and DB writes minimal.
-4. New movements are bulk-inserted in a single transaction. The unique index silently drops exact duplicates on restart.
+3. Each thread calls `/odds` with the `last` cursor — only changed lines are returned.
+4. `detector.py` bulk-inserts movements in one transaction; the unique index drops exact duplicates silently.
 5. On any network or DB error the thread backs off exponentially (1 → 2 → 4 … 60 s) and reconnects automatically.

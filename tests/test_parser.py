@@ -1,11 +1,11 @@
 """
-tests/test_parser.py — Unit tests for the parser module.
-Run with: python -m pytest tests/
+tests/test_parser.py — Unit tests for parse_fixtures / parse_odds in api_client.py
+Run with: pytest tests/ -v
 """
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from parser import parse_fixtures, parse_odds
+from app.api_client import parse_fixtures, parse_odds
 
 
 FIXTURE_PAYLOAD = {
@@ -81,7 +81,6 @@ def test_parse_odds_total():
 
 
 def test_parse_odds_no_fixtures():
-    """Parser should still work even if fixture metadata is missing."""
     movements = parse_odds("basketball", {}, ODDS_PAYLOAD)
     assert len(movements) == 3
     assert movements[0]["home_team"] == ""

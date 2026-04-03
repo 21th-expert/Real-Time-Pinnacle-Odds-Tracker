@@ -1,8 +1,9 @@
 """
-config.py — Loads all settings from environment variables.
+config.py — Loads all service settings from environment variables.
 """
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass
@@ -13,7 +14,7 @@ class Config:
     api_base_url: str
 
     # Database
-    db_type: str          # "mysql" or "postgresql"
+    db_type: str        # "postgresql" | "mysql"
     db_host: str
     db_port: int
     db_name: str
@@ -21,8 +22,8 @@ class Config:
     db_password: str
 
     # Polling
-    poll_interval_seconds: float   # base interval between polls
-    sports: list                   # e.g. ["football", "basketball"]
+    poll_interval_seconds: float
+    sports: List[str]   # e.g. ["football", "basketball"]
 
 
 def load_config() -> Config:
