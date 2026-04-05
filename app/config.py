@@ -17,6 +17,7 @@ class Config:
     db_type: str        # "postgresql" | "mysql"
     db_host: str
     db_port: int
+    
     db_name: str
     db_user: str
     db_password: str
