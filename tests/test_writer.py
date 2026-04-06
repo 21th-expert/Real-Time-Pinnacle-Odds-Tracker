@@ -21,7 +21,7 @@ def _make_conn():
             price_home REAL, price_away REAL, price_draw REAL,
             line REAL, max_bet REAL, recorded_at TEXT,
             UNIQUE(event_id, market_type, period,
-                   price_home, price_away, price_draw, line, recorded_at)
+                   price_home, price_away, price_draw, recorded_at)
         )
     """)
     conn.commit()
